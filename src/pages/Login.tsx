@@ -86,9 +86,6 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Default admin credentials: admin@example.com / admin123
-        </p>
       </div>
     </div>
   );
