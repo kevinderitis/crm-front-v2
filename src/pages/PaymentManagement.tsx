@@ -85,7 +85,7 @@ export default function PaymentManagement() {
         </div>
       ) : payments.length === 0 ? (
         <div className="flex items-center justify-center h-32 text-gray-500">
-          No payments found
+          No hay pagos encontrados
         </div>
       ) : (
         <table className="min-w-full">

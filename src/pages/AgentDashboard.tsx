@@ -35,7 +35,7 @@ export default function AgentDashboard() {
       container.scrollTop = container.scrollHeight;
     }
   };
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -502,18 +502,28 @@ export default function AgentDashboard() {
                   >
                     <Tag className="h-5 w-5 text-gray-600" />
                   </button>
-                  <button
-                    onClick={toggleAI}
-                    className={clsx(
-                      "p-2 rounded-full",
+                  <div className="flex items-center space-x-2">
+                    <span className={clsx(
+                      "text-sm",
                       selectedConversation.ai_enabled
-                        ? "bg-green-100 text-green-600 hover:bg-green-200"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    )}
-                    title="Toggle AI Assistant"
-                  >
-                    <Bot className="h-5 w-5" />
-                  </button>
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-gray-600 dark:text-gray-400"
+                    )}>
+                      {selectedConversation.ai_enabled ? 'IA Activada' : 'IA Desactivada'}
+                    </span>
+                    <button
+                      onClick={toggleAI}
+                      className={clsx(
+                        "p-2 rounded-full",
+                        selectedConversation.ai_enabled
+                          ? "bg-green-100 text-green-600 hover:bg-green-200"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      )}
+                      title="Toggle AI Assistant"
+                    >
+                      <Bot className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 

@@ -13,7 +13,7 @@ export default function WebSocketStatus() {
 
       // Notificar cuando se reconecta
       if (currentStatus.connected && !status.connected) {
-        toast.success('Server reconectado!');
+        toast.success('Conectado');
       }
       // Notificar cuando se desconecta
       if (!currentStatus.connected && status.connected) {
