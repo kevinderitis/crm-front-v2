@@ -26,7 +26,7 @@ function UserManagement() {
       const fetchedUsers = await api.getUsers();
       setUsers(fetchedUsers);
     } catch (error) {
-      toast.error('Error loading users');
+      toast.error('Error cargando usuarios');
     }
   };
 
@@ -38,9 +38,9 @@ function UserManagement() {
       await loadUsers();
       setShowCreateForm(false);
       setNewUser({ email: '', password: '', full_name: '', role: 'agent' });
-      toast.success('User created successfully');
+      toast.success('Usuario creado con éxito');
     } catch (error) {
-      toast.error('Error creating user');
+      toast.error('Error creando usuario');
     } finally {
       setIsLoading(false);
     }

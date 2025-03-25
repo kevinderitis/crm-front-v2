@@ -119,7 +119,7 @@ export function useWebSocket({ onNewMessage, onConversationUpdate, onNewPayment,
     const audio = new Audio('/notification.mp3');
     audio.play().catch(console.error);
 
-    toast.success(`New ticket created: ${ticket.subject}`, {
+    toast.success(`Nuevo ticket: ${ticket.subject}`, {
       duration: 5000
     });
 

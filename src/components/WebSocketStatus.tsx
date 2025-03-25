@@ -17,7 +17,7 @@ export default function WebSocketStatus() {
       }
       // Notificar cuando se desconecta
       if (!currentStatus.connected && status.connected) {
-        toast.error('Desconectado del server, intentando reconectar...');
+        toast.error('Reconectando...');
       }
     }, 1000);
 

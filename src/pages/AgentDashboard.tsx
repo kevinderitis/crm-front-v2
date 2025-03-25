@@ -82,7 +82,7 @@ export default function AgentDashboard() {
       const fetchedMessages = await api.getMessages(conversationId);
       setMessages(fetchedMessages);
     } catch (error) {
-      toast.error('Error loading messages');
+      toast.error('Error cargando mensajes');
     }
   };
 
@@ -163,7 +163,7 @@ export default function AgentDashboard() {
       await signOut();
       navigate('/login');
     } catch (error) {
-      toast.error('Error logging out');
+      toast.error('Error saliendo');
     }
   };
 
@@ -178,7 +178,7 @@ export default function AgentDashboard() {
         await handleSelectConversation(fetchedConversations[0]);
       }
     } catch (error) {
-      toast.error('Error loading conversations');
+      toast.error('Error cargando conversaciones');
     } finally {
       setIsLoading(false);
     }
@@ -209,7 +209,7 @@ export default function AgentDashboard() {
         )
       );
     } catch (error) {
-      toast.error('Error sending message');
+      toast.error('Error enviando mensajes');
     }
   };
 
@@ -309,7 +309,7 @@ export default function AgentDashboard() {
 
       setAvailableTags(prev => [...prev, createdTag]);
       setNewTag({ name: '', color: '#FF4444' });
-      toast.success('Tag created successfully');
+      toast.success('Tag creado con exito');
     } catch (error) {
       toast.error('Error creating tag');
     }
@@ -619,7 +619,7 @@ export default function AgentDashboard() {
                       <img
                         src={message.content}
                         alt="Message attachment"
-                        className="rounded-lg max-w-full"
+                        className="rounded-lg max-w-full object-contain max-h-[400px] w-auto"
                       />
                     )}
                     <span className="text-xs opacity-75 mt-1 block">
