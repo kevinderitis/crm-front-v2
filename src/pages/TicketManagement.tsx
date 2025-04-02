@@ -35,26 +35,54 @@ export default function TicketManagement() {
     };
 
     const handleComplete = async (ticketId: string) => {
+        // Optimistic update
+        setTickets(currentTickets =>
+            currentTickets.map(ticket =>
+                ticket._id === ticketId
+                    ? { ...ticket, status: 'completed' }
+                    : ticket
+            )
+        );
+
         try {
-            const updatedTicket = await api.completeTicket(ticketId);
-            setTickets(tickets.map(ticket =>
-                ticket._id === ticketId ? updatedTicket : ticket
-            ));
+            await api.completeTicket(ticketId);
             toast.success('Ticket completado con éxito');
         } catch (error) {
-            toast.error('Error completing ticket');
+            // Revert on error
+            setTickets(currentTickets =>
+                currentTickets.map(ticket =>
+                    ticket._id === ticketId
+                        ? { ...ticket, status: 'open' }
+                        : ticket
+                )
+            );
+            toast.error('Error al cerrar ticket');
         }
     };
 
     const handleCancel = async (ticketId: string) => {
+        // Optimistic update
+        setTickets(currentTickets =>
+            currentTickets.map(ticket =>
+                ticket._id === ticketId
+                    ? { ...ticket, status: 'cancelled' }
+                    : ticket
+            )
+        );
+
         try {
-            const updatedTicket = await api.cancelTicket(ticketId);
-            setTickets(tickets.map(ticket =>
-                ticket._id === ticketId ? updatedTicket : ticket
-            ));
+            await api.cancelTicket(ticketId);
             toast.success('Ticket cancelado con éxito');
         } catch (error) {
-            toast.error('Error cancelling ticket');
+            // Revert on error
+            setTickets(currentTickets =>
+                currentTickets.map(ticket =>
+                    ticket._id === ticketId
+                        ? { ...ticket, status: 'open' }
+                        : ticket
+                )
+            );
+            toast.error('Error cancelando ticket');
         }
     };
 
