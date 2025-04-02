@@ -9,6 +9,8 @@ class APIService {
   private messageHandlers: ((message: any) => void)[] = [];
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private readonly HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
   private constructor() { }
 
@@ -32,6 +34,25 @@ class APIService {
 
   private resetReconnectAttempts() {
     this.reconnectAttempts = 0;
+  }
+
+  private startHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, this.HEARTBEAT_INTERVAL);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
   }
 
   connectWebSocket() {
@@ -58,17 +79,17 @@ class APIService {
     this.socket.onopen = () => {
       console.log('WebSocket: Connection established successfully');
       this.resetReconnectAttempts();
-      // this.testConnection();
+      this.startHeartbeat();
     };
 
     this.socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        // console.log('WebSocket: Message received', {
-        //   type: data.type,
-        //   timestamp: new Date().toISOString(),
-        //   data
-        // });
+
+        // Handle pong response
+        if (data.type === 'pong') {
+          return;
+        }
 
         this.messageHandlers.forEach(handler => handler(data));
       } catch (error) {
@@ -83,12 +104,15 @@ class APIService {
         wasClean: event.wasClean
       });
 
-      if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+      this.stopHeartbeat();
+
+      if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS && event.code !== 1000) {
         this.reconnectAttempts++;
         console.log(`WebSocket: Attempting to reconnect (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})...`);
         setTimeout(() => this.connectWebSocket(), 5000);
-      } else {
+      } else if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
         console.error('WebSocket: Max reconnection attempts reached');
+        toast.error('Connection lost. Please refresh the page.');
       }
     };
 
@@ -97,22 +121,11 @@ class APIService {
     };
   }
 
-  private testConnection() {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      const testMessage = {
-        type: 'ping',
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('WebSocket: Sending test message', testMessage);
-      this.socket.send(JSON.stringify(testMessage));
-    }
-  }
-
   disconnectWebSocket() {
     if (this.socket) {
+      this.stopHeartbeat();
       console.log('WebSocket: Closing connection...');
-      this.socket.close();
+      this.socket.close(1000, 'User disconnected');
       this.socket = null;
       this.resetReconnectAttempts();
     }
@@ -173,7 +186,7 @@ class APIService {
     this.disconnectWebSocket();
   }
 
-  // Rest of the API methods...
+  // Users
   async getUsers(): Promise<User[]> {
     return this.fetchWithAuth('/users');
   }
@@ -185,6 +198,7 @@ class APIService {
     });
   }
 
+  // Conversations
   async getConversations(): Promise<Conversation[]> {
     return this.fetchWithAuth('/messages/conversations');
   }
@@ -217,6 +231,20 @@ class APIService {
     });
   }
 
+  async markConversationAsRead(conversationId: string): Promise<Conversation> {
+    return this.fetchWithAuth(`/messages/conversations/${conversationId}/read`, {
+      method: 'PUT'
+    });
+  }
+
+  async updateCustomerName(conversationId: string, customerName: string): Promise<Conversation> {
+    return this.fetchWithAuth(`/messages/conversations/${conversationId}/customer-name`, {
+      method: 'PUT',
+      body: JSON.stringify({ customer_name: customerName }),
+    });
+  }
+
+  // Tags
   async getTags(): Promise<Tag[]> {
     return this.fetchWithAuth('/tags');
   }
@@ -241,6 +269,7 @@ class APIService {
     });
   }
 
+  // Payments
   async getPayments(): Promise<Payment[]> {
     return this.fetchWithAuth('/payments');
   }
@@ -257,21 +286,9 @@ class APIService {
     });
   }
 
+  // Meta Configuration
   async getMetaConfig(): Promise<MetaConfig> {
     return this.fetchWithAuth('/meta/config');
-  }
-
-  async markConversationAsRead(conversationId: string): Promise<Conversation> {
-    return this.fetchWithAuth(`/messages/conversations/${conversationId}/read`, {
-      method: 'PUT'
-    });
-  }
-
-  async updateCustomerName(conversationId: string, customerName: string): Promise<Conversation> {
-    return this.fetchWithAuth(`/messages/conversations/${conversationId}/customer-name`, {
-      method: 'PUT',
-      body: JSON.stringify({ customer_name: customerName }),
-    });
   }
 
   async updateMetaConfig(config: Partial<MetaConfig>): Promise<MetaConfig> {
@@ -280,7 +297,6 @@ class APIService {
       body: JSON.stringify(config),
     });
   }
-
 
   // Tickets
   async getTickets(): Promise<Ticket[]> {
@@ -306,6 +322,5 @@ class APIService {
     });
   }
 }
-
 
 export const api = APIService.getInstance();
