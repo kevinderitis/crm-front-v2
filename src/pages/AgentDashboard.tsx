@@ -231,6 +231,12 @@ export default function AgentDashboard() {
 
   const addTag = async (tag: TagType) => {
     if (selectedConversation && !selectedConversation.tags.includes(tag.name)) {
+
+      if (selectedConversation.tags.includes(tag.name)) {
+        toast.error('La etiqueta ya ha sido agregada.');
+        return;
+      }
+
       try {
         await api.addTagToConversation(selectedConversation._id, tag._id);
         const updatedConversation = {
