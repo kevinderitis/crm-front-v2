@@ -50,7 +50,7 @@ export default function DashboardOverview() {
         api.getPayments(),
         api.getTickets()
       ]);
-      
+
       setPayments(fetchedPayments.filter(p => p.status === 'pending'));
       setTickets(fetchedTickets.filter(t => t.status === 'open'));
     } catch (error) {
@@ -153,13 +153,16 @@ export default function DashboardOverview() {
                       <div>
                         <h3 className="font-medium text-gray-900">{payment.customerName}</h3>
                         <p className="text-sm text-gray-500">
-                          {payment.date} a las {payment.time}
+                          {new Date(payment.date).toLocaleString("es-AR", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-4">
                       <button
-                        onClick={() => setSelectedImage(payment.receiptImage)}
+                        onClick={() => setSelectedImage(payment.image)}
                         className="flex items-center text-sm text-blue-600 hover:text-blue-800"
                       >
                         <Image className="h-4 w-4 mr-1" />
@@ -210,7 +213,10 @@ export default function DashboardOverview() {
                     <div className="mb-2">
                       <h3 className="font-medium text-gray-900">{ticket.subject}</h3>
                       <p className="text-sm text-gray-500">
-                        {ticket.date} a las {ticket.time}
+                        {new Date(ticket.date).toLocaleString("es-AR", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
                       </p>
                     </div>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -240,14 +246,14 @@ export default function DashboardOverview() {
 
       {/* Modal de Imagen */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           onClick={() => setSelectedImage(null)}
         >
           <div className="max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-lg">
-            <img 
-              src={selectedImage} 
-              alt="Comprobante de pago" 
+            <img
+              src={selectedImage}
+              alt="Comprobante de pago"
               className="w-full h-auto"
             />
           </div>
