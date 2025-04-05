@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AgentDashboard from './pages/AgentDashboard';
 import PaymentManagement from './pages/PaymentManagement';
 import TicketManagement from './pages/TicketManagement';
+import DashboardOverview from './pages/DashboardOverview';
 import WebSocketStatus from './components/WebSocketStatus';
 import { useAuthStore } from './store/authStore';
 
@@ -15,19 +16,21 @@ function ProtectedRoute({ children, requireAdmin = false }: { children: React.Re
     initialized: state.initialized
   }));
 
-  // Mostrar nada mientras se inicializa la autenticación
   if (!initialized) {
     return null;
   }
 
   if (!user) return <Navigate to="/login" />;
-  if (requireAdmin && user.role !== 'admin') return <Navigate to="/agent" />;
+  if (requireAdmin && user.role !== 'admin') return <Navigate to="/overview" />;
 
   return <>{children}</>;
 }
 
 function App() {
-  const initAuth = useAuthStore((state) => state.initAuth);
+  const { initAuth, user } = useAuthStore((state) => ({
+    initAuth: state.initAuth,
+    user: state.user
+  }));
 
   useEffect(() => {
     initAuth();
@@ -70,7 +73,24 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route
+            path="/overview"
+            element={
+              <ProtectedRoute>
+                <DashboardOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/" 
+            element={
+              user ? (
+                <Navigate to={user.role === 'admin' ? '/admin' : '/overview'} replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
         </Routes>
       </Router>
       <Toaster position="top-center" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, LogOut, Send, Paperclip, CreditCard, Tag, Bot, Plus, X, Ticket } from 'lucide-react';
+import { Search, LogOut, Send, Paperclip, CreditCard, Tag, Bot, Plus, X, Ticket, LayoutDashboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { mockTags } from '../lib/mockData';
@@ -337,6 +337,13 @@ export default function AgentDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold">Mensajes</h1>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => navigate('/overview')}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400"
+                title="Dashboard Overview"
+              >
+                <LayoutDashboard className="h-5 w-5" />
+              </button>
               <button
                 onClick={() => navigate('/tickets')}
                 className="p-2 hover:bg-purple-100 rounded-full text-purple-600"
