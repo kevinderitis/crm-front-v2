@@ -156,9 +156,6 @@ export default function DashboardOverview() {
                           {payment.date} a las {payment.time}
                         </p>
                       </div>
-                      <span className="text-lg font-semibold text-green-600">
-                        ${payment.amount.toFixed(2)}
-                      </span>
                     </div>
                     <div className="flex items-center justify-between mt-4">
                       <button
