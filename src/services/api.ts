@@ -1,4 +1,4 @@
-import { User, Conversation, Message, Payment, Tag, MetaConfig, Ticket } from '../types';
+import { User, Conversation, Message, Payment, Tag, MetaConfig, Ticket, PaymentApproval, TicketCompletion } from '../types';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 
@@ -274,9 +274,10 @@ class APIService {
     return this.fetchWithAuth('/payments');
   }
 
-  async approvePayment(paymentId: string): Promise<Payment> {
+  async approvePayment(paymentId: string, approvalData: PaymentApproval): Promise<Payment> {
     return this.fetchWithAuth(`/payments/${paymentId}/approve`, {
       method: 'PUT',
+      body: JSON.stringify(approvalData),
     });
   }
 
@@ -310,9 +311,10 @@ class APIService {
     });
   }
 
-  async completeTicket(ticketId: string): Promise<Ticket> {
+  async completeTicket(ticketId: string, completionData?: TicketCompletion): Promise<Ticket> {
     return this.fetchWithAuth(`/tickets/${ticketId}/complete`, {
       method: 'PUT',
+      body: JSON.stringify(completionData || {}),
     });
   }
 

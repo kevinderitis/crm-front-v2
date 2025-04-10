@@ -41,6 +41,12 @@ export interface Payment {
   date: string;
   image: string;
   status: 'pending' | 'approved' | 'rejected';
+  bonus?: number;
+}
+
+export interface PaymentApproval {
+  amount: number;
+  bonus: number;
 }
 
 export interface MetaConfig {
@@ -56,6 +62,11 @@ export interface Ticket {
   description: string;
   date: string;
   time: string;
-  status: 'open' | 'completed' | 'cancelled';
+  status: 'open' | 'completed' | 'cancelled' | 'edited';
   created_by: string;
+  real_amount?: number;
+}
+
+export interface TicketCompletion {
+  real_amount?: number;
 }

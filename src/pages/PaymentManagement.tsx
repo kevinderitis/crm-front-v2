@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Payment } from '../types';
+import { Payment, PaymentApproval } from '../types';
 import { Check, X, Image, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -12,19 +12,22 @@ export default function PaymentManagement() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [isLoading, setIsLoading] = useState(true);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [approvalData, setApprovalData] = useState<PaymentApproval>({
+    amount: 0,
+    bonus: 0
+  });
   const navigate = useNavigate();
 
-  // Cargar pagos iniciales
   useEffect(() => {
     loadPayments();
   }, []);
 
-  // Suscribirse a eventos de WebSocket para nuevos pagos
   useWebSocket({
     onNewPayment: (payment) => {
       if (payment && payment.status) {
         setPayments(prev => [payment, ...prev]);
-        // toast.success(`New payment received from ${payment.customerName}!`);
       } else {
         console.error('Invalid payment data received:', payment);
       }
@@ -43,15 +46,33 @@ export default function PaymentManagement() {
     }
   };
 
-  const handleApprove = async (paymentId: string) => {
+  const handleApproveClick = (paymentId: string) => {
+    const payment = payments.find(p => p._id === paymentId);
+    if (payment) {
+      setSelectedPaymentId(paymentId);
+      setApprovalData({
+        amount: payment.amount || 0,
+        bonus: 0
+      });
+      setShowApprovalModal(true);
+    }
+  };
+
+  const handleApprovePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPaymentId) return;
+
     try {
-      const updatedPayment = await api.approvePayment(paymentId);
+      const updatedPayment = await api.approvePayment(selectedPaymentId, approvalData);
       setPayments(payments.map(payment => 
-        payment._id === paymentId ? updatedPayment : payment
+        payment._id === selectedPaymentId ? updatedPayment : payment
       ));
+      setShowApprovalModal(false);
+      setSelectedPaymentId(null);
+      setApprovalData({ amount: 0, bonus: 0 });
       toast.success('Pago aprobado con éxito');
     } catch (error) {
-      toast.error('Error approving payment');
+      toast.error('Error al aprobar el pago');
     }
   };
 
@@ -63,7 +84,7 @@ export default function PaymentManagement() {
       ));
       toast.success('Pago rechazado con éxito');
     } catch (error) {
-      toast.error('Error rejecting payment');
+      toast.error('Error al rechazar el pago');
     }
   };
 
@@ -92,9 +113,7 @@ export default function PaymentManagement() {
           <thead className="bg-gray-50 sticky top-0">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comprobante</th>
               {showActions && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -108,12 +127,22 @@ export default function PaymentManagement() {
                 payment.status === 'approved' && "bg-green-50",
                 payment.status === 'rejected' && "bg-red-50"
               )}>
-                <td className="px-6 py-4 whitespace-nowrap">{payment.customerName}</td>
-                {/* <td className="px-6 py-4 whitespace-nowrap">
-                  ${payment.amount?.toFixed(2)}
-                </td> */}
-                <td className="px-6 py-4 whitespace-nowrap">{new Date(payment.date).toLocaleDateString('es-AR')} - {new Date(payment.date).toLocaleTimeString('es-AR')}</td>
-                {/* <td className="px-6 py-4 whitespace-nowrap">{payment.time}</td> */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div className="font-medium text-gray-900">{payment.customerName}</div>
+                    {payment.amount > 0 && (
+                      <div className="text-sm text-gray-500">
+                        ${payment.amount.toFixed(2)}
+                        {payment.bonus > 0 && (
+                          <span className="ml-2 text-green-600">+${payment.bonus.toFixed(2)}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {new Date(payment.date).toLocaleDateString('es-AR')} - {new Date(payment.date).toLocaleTimeString('es-AR')}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => setSelectedImage(payment.image)}
@@ -126,16 +155,16 @@ export default function PaymentManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleApprove(payment._id)}
+                        onClick={() => handleApproveClick(payment._id)}
                         className="p-1 text-green-600 hover:text-green-800"
-                        title="Approve"
+                        title="Aprobar"
                       >
                         <Check className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleReject(payment._id)}
                         className="p-1 text-red-600 hover:text-red-800"
-                        title="Reject"
+                        title="Rechazar"
                       >
                         <X className="h-5 w-5" />
                       </button>
@@ -234,6 +263,64 @@ export default function PaymentManagement() {
           )}
         </div>
       </div>
+
+      {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Aprobar Pago</h2>
+            <form onSubmit={handleApprovePayment}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importe del Pago
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={approvalData.amount}
+                    onChange={(e) => setApprovalData({ ...approvalData, amount: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importe del Bono
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={approvalData.bonus}
+                    onChange={(e) => setApprovalData({ ...approvalData, bonus: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowApprovalModal(false);
+                    setSelectedPaymentId(null);
+                    setApprovalData({ amount: 0, bonus: 0 });
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Aprobar Pago
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Image Modal */}
       {selectedImage && (

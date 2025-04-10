@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Payment, Ticket } from '../types';
+import { Payment, PaymentApproval, Ticket, TicketCompletion } from '../types';
 import { api } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { Image, MessageSquare } from 'lucide-react';
@@ -12,6 +12,15 @@ export default function DashboardOverview() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [approvalData, setApprovalData] = useState<PaymentApproval>({
+    amount: 0,
+    bonus: 0
+  });
+  const [showTicketCompletionModal, setShowTicketCompletionModal] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [completionAmount, setCompletionAmount] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,10 +69,28 @@ export default function DashboardOverview() {
     }
   };
 
-  const handleApprovePayment = async (paymentId: string) => {
+  const handleApproveClick = (paymentId: string) => {
+    const payment = payments.find(p => p._id === paymentId);
+    if (payment) {
+      setSelectedPaymentId(paymentId);
+      setApprovalData({
+        amount: payment.amount || 0,
+        bonus: 0
+      });
+      setShowApprovalModal(true);
+    }
+  };
+
+  const handleApprovePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPaymentId) return;
+
     try {
-      await api.approvePayment(paymentId);
-      setPayments(prev => prev.filter(p => p._id !== paymentId));
+      await api.approvePayment(selectedPaymentId, approvalData);
+      setPayments(prev => prev.filter(p => p._id !== selectedPaymentId));
+      setShowApprovalModal(false);
+      setSelectedPaymentId(null);
+      setApprovalData({ amount: 0, bonus: 0 });
       toast.success('Pago aprobado exitosamente');
     } catch (error) {
       toast.error('Error al aprobar el pago');
@@ -80,10 +107,27 @@ export default function DashboardOverview() {
     }
   };
 
-  const handleCompleteTicket = async (ticketId: string) => {
+  const handleCompleteTicketClick = (ticket: Ticket) => {
+    if (ticket.subject.toLowerCase() === 'retiro') {
+      setSelectedTicketId(ticket._id);
+      setCompletionAmount(0);
+      setShowTicketCompletionModal(true);
+    } else {
+      handleCompleteTicket(ticket._id);
+    }
+  };
+
+  const handleCompleteTicket = async (ticketId: string, amount?: number) => {
     try {
-      await api.completeTicket(ticketId);
+      const completionData: TicketCompletion | undefined = amount !== undefined 
+        ? { real_amount: amount }
+        : undefined;
+
+      await api.completeTicket(ticketId, completionData);
       setTickets(prev => prev.filter(t => t._id !== ticketId));
+      setShowTicketCompletionModal(false);
+      setSelectedTicketId(null);
+      setCompletionAmount(0);
       toast.success('Ticket completado exitosamente');
     } catch (error) {
       toast.error('Error al completar el ticket');
@@ -93,7 +137,7 @@ export default function DashboardOverview() {
   const handleCancelTicket = async (ticketId: string) => {
     try {
       await api.cancelTicket(ticketId);
-      setTickets(prev => prev.filter(t => t.id !== ticketId));
+      setTickets(prev => prev.filter(t => t._id !== ticketId));
       toast.success('Ticket cancelado exitosamente');
     } catch (error) {
       toast.error('Error al cancelar el ticket');
@@ -153,12 +197,12 @@ export default function DashboardOverview() {
                       <div>
                         <h3 className="font-medium text-gray-900">{payment.customerName}</h3>
                         <p className="text-sm text-gray-500">
-                          {new Date(payment.date).toLocaleString("es-AR", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })}
+                          {new Date(payment.date).toLocaleDateString('es-AR')} - {new Date(payment.date).toLocaleTimeString('es-AR')}
                         </p>
                       </div>
+                      <span className="text-lg font-semibold text-green-600">
+                        ${payment.amount?.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between mt-4">
                       <button
@@ -176,7 +220,7 @@ export default function DashboardOverview() {
                           Rechazar
                         </button>
                         <button
-                          onClick={() => handleApprovePayment(payment._id)}
+                          onClick={() => handleApproveClick(payment._id)}
                           className="px-3 py-1 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded"
                         >
                           Aprobar
@@ -209,14 +253,11 @@ export default function DashboardOverview() {
                 </div>
               ) : (
                 tickets.map((ticket) => (
-                  <div key={ticket.id} className="p-4 hover:bg-gray-50">
+                  <div key={ticket._id} className="p-4 hover:bg-gray-50">
                     <div className="mb-2">
                       <h3 className="font-medium text-gray-900">{ticket.subject}</h3>
                       <p className="text-sm text-gray-500">
-                        {new Date(ticket.date).toLocaleString("es-AR", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
+                        {new Date(ticket.date).toLocaleDateString('es-AR')} - {new Date(ticket.date).toLocaleTimeString('es-AR')}
                       </p>
                     </div>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -230,7 +271,7 @@ export default function DashboardOverview() {
                         Cancelar
                       </button>
                       <button
-                        onClick={() => handleCompleteTicket(ticket._id)}
+                        onClick={() => handleCompleteTicketClick(ticket)}
                         className="px-3 py-1 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded"
                       >
                         Completar
@@ -244,16 +285,124 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Modal de Imagen */}
+      {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Aprobar Pago</h2>
+            <form onSubmit={handleApprovePayment}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importe del Pago
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={approvalData.amount}
+                    onChange={(e) => setApprovalData({ ...approvalData, amount: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importe del Bono
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={approvalData.bonus}
+                    onChange={(e) => setApprovalData({ ...approvalData, bonus: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowApprovalModal(false);
+                    setSelectedPaymentId(null);
+                    setApprovalData({ amount: 0, bonus: 0 });
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Aprobar Pago
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Ticket Completion Modal */}
+      {showTicketCompletionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Completar Ticket de Retiro</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (selectedTicketId) {
+                handleCompleteTicket(selectedTicketId, completionAmount);
+              }
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importe del Retiro
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={completionAmount}
+                    onChange={(e) => setCompletionAmount(parseFloat(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTicketCompletionModal(false);
+                    setSelectedTicketId(null);
+                    setCompletionAmount(0);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Completar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
       {selectedImage && (
-        <div
+        <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           onClick={() => setSelectedImage(null)}
         >
           <div className="max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-lg">
-            <img
-              src={selectedImage}
-              alt="Comprobante de pago"
+            <img 
+              src={selectedImage} 
+              alt="Comprobante de pago" 
               className="w-full h-auto"
             />
           </div>
