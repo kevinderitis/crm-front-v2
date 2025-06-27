@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Payment, PaymentApproval, Ticket, TicketCompletion } from '../types';
 import { api } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
-import { Image, MessageSquare } from 'lucide-react';
+import { Image, MessageSquare, FileBarChart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 
@@ -119,7 +119,7 @@ export default function DashboardOverview() {
 
   const handleCompleteTicket = async (ticketId: string, amount?: number) => {
     try {
-      const completionData: TicketCompletion | undefined = amount !== undefined 
+      const completionData: TicketCompletion | undefined = amount !== undefined
         ? { real_amount: amount }
         : undefined;
 
@@ -159,13 +159,22 @@ export default function DashboardOverview() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold text-gray-900">Panel de Control</h1>
-            <button
-              onClick={() => navigate('/agent')}
-              className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Ir a Mensajes
-            </button>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/reports')}
+                className="flex items-center px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+              >
+                <FileBarChart className="h-5 w-5 mr-2" />
+                Reportes
+              </button>
+              <button
+                onClick={() => navigate('/agent')}
+                className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Ir a Mensajes
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -395,14 +404,14 @@ export default function DashboardOverview() {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           onClick={() => setSelectedImage(null)}
         >
           <div className="max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-lg">
-            <img 
-              src={selectedImage} 
-              alt="Comprobante de pago" 
+            <img
+              src={selectedImage}
+              alt="Comprobante de pago"
               className="w-full h-auto"
             />
           </div>

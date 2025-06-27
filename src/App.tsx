@@ -7,6 +7,7 @@ import AgentDashboard from './pages/AgentDashboard';
 import PaymentManagement from './pages/PaymentManagement';
 import TicketManagement from './pages/TicketManagement';
 import DashboardOverview from './pages/DashboardOverview';
+import Reports from './pages/Reports';
 import WebSocketStatus from './components/WebSocketStatus';
 import { useAuthStore } from './store/authStore';
 
@@ -74,6 +75,14 @@ function App() {
             }
           />
           <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/overview"
             element={
               <ProtectedRoute>
@@ -81,15 +90,15 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               user ? (
                 <Navigate to={user.role === 'admin' ? '/admin' : '/overview'} replace />
               ) : (
                 <Navigate to="/login" replace />
               )
-            } 
+            }
           />
         </Routes>
       </Router>

@@ -1,4 +1,4 @@
-import { User, Conversation, Message, Payment, Tag, MetaConfig, Ticket, PaymentApproval, TicketCompletion } from '../types';
+import { User, Conversation, Message, Payment, Tag, MetaConfig, Ticket, PaymentApproval, TicketCompletion, SalesReport, PrizeReport } from '../types';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 
@@ -10,7 +10,7 @@ class APIService {
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private readonly HEARTBEAT_INTERVAL = 30000; 
+  private readonly HEARTBEAT_INTERVAL = 30000;
 
   private constructor() { }
 
@@ -322,6 +322,23 @@ class APIService {
     return this.fetchWithAuth(`/tickets/${ticketId}/cancel`, {
       method: 'PUT',
     });
+  }
+
+  // Reports
+  async getSalesReport(startDate?: string, endDate?: string): Promise<SalesReport[]> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    return this.fetchWithAuth(`/reports/sales?${params.toString()}`);
+  }
+
+  async getPrizesReport(startDate?: string, endDate?: string): Promise<PrizeReport[]> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    return this.fetchWithAuth(`/reports/prizes?${params.toString()}`);
   }
 }
 

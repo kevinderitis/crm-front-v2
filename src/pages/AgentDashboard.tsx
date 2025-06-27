@@ -640,7 +640,11 @@ export default function AgentDashboard() {
                       <p>{message.content}</p>
                     ) : (
                       <img
-                        src={message.content}
+                        src={
+                          message.mime_type
+                            ? `data:${message.mime_type};base64,${message.content}`
+                            : message.content
+                        }
                         alt="Message attachment"
                         className="rounded-lg max-w-full object-contain max-h-[400px] w-auto"
                       />

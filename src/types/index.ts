@@ -25,6 +25,7 @@ export interface Message {
   conversation_id: string;
   sender_id: string;
   content: string;
+  mime_type: string;
   type: 'text' | 'image';
   created_at: string;
 }
@@ -69,4 +70,24 @@ export interface Ticket {
 
 export interface TicketCompletion {
   real_amount?: number;
+}
+
+export interface SalesReport {
+  date: string;
+  newUsers: number;
+  ticketCount: number;
+  netSales: number;
+  bonuses: number;
+  prizes: number;
+  totalSales: number;
+}
+
+export interface PrizeReport {
+  date: string;
+  user: string;
+  amount: number;
+  collection: number;
+  bonus: number;
+  status: string;
+  operator: string;
 }
