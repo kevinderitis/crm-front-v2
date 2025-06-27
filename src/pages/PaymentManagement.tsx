@@ -64,7 +64,7 @@ export default function PaymentManagement() {
 
     try {
       const updatedPayment = await api.approvePayment(selectedPaymentId, approvalData);
-      setPayments(payments.map(payment => 
+      setPayments(payments.map(payment =>
         payment._id === selectedPaymentId ? updatedPayment : payment
       ));
       setShowApprovalModal(false);
@@ -79,7 +79,7 @@ export default function PaymentManagement() {
   const handleReject = async (paymentId: string) => {
     try {
       const updatedPayment = await api.rejectPayment(paymentId);
-      setPayments(payments.map(payment => 
+      setPayments(payments.map(payment =>
         payment._id === paymentId ? updatedPayment : payment
       ));
       toast.success('Pago rechazado con éxito');
@@ -92,11 +92,11 @@ export default function PaymentManagement() {
   const approvedPayments = payments.filter(p => p?.status === 'approved') || [];
   const rejectedPayments = payments.filter(p => p?.status === 'rejected') || [];
 
-  const PaymentTable = ({ 
-    payments, 
+  const PaymentTable = ({
+    payments,
     showActions = false,
-  }: { 
-    payments: Payment[], 
+  }: {
+    payments: Payment[],
     showActions?: boolean,
   }) => (
     <div className="overflow-auto h-full bg-white rounded-lg shadow">
@@ -222,7 +222,7 @@ export default function PaymentManagement() {
           Volver
         </button>
       </div>
-      
+
       <div className="flex-1 p-4 space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <TabHeader
@@ -324,14 +324,18 @@ export default function PaymentManagement() {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           onClick={() => setSelectedImage(null)}
         >
           <div className="max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-lg">
-            <img 
-              src={selectedImage} 
-              alt="Payment receipt" 
+            <img
+              src={
+                selectedImage?.startsWith('data:image/')
+                  ? selectedImage
+                  : `data:image/jpeg;base64,${selectedImage}`
+              }
+              alt="Comprobante de pago"
               className="w-full h-auto"
             />
           </div>
