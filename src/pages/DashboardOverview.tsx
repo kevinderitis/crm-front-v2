@@ -410,7 +410,11 @@ export default function DashboardOverview() {
         >
           <div className="max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-lg">
             <img
-              src={selectedImage}
+              src={
+                selectedImage?.startsWith('data:image/')
+                  ? selectedImage
+                  : `data:image/jpeg;base64,${selectedImage}`
+              }
               alt="Comprobante de pago"
               className="w-full h-auto"
             />
