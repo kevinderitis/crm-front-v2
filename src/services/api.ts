@@ -281,9 +281,13 @@ class APIService {
     });
   }
 
-  async rejectPayment(paymentId: string): Promise<Payment> {
+  async rejectPayment(paymentId: string, data: { reason: string }): Promise<Payment> {
     return this.fetchWithAuth(`/payments/${paymentId}/reject`, {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
   }
 

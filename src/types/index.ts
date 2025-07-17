@@ -63,7 +63,7 @@ export interface Ticket {
   description: string;
   date: string;
   time: string;
-  status: 'open' | 'completed' | 'cancelled' | 'edited';
+  status: 'open' | 'completed' | 'cancelled' | 'edited' | 'pending';
   created_by: string;
   real_amount?: number;
 }

@@ -13,6 +13,9 @@ export default function DashboardOverview() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedRejectionPaymentId, setSelectedRejectionPaymentId] = useState<string | null>(null);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const [approvalData, setApprovalData] = useState<PaymentApproval>({
     amount: 0,
@@ -61,7 +64,7 @@ export default function DashboardOverview() {
       ]);
 
       setPayments(fetchedPayments.filter(p => p.status === 'pending'));
-      setTickets(fetchedTickets.filter(t => t.status === 'open'));
+      setTickets(fetchedTickets.filter(t => t.status === 'open' || t.status === 'pending'));
     } catch (error) {
       toast.error('Error al cargar los datos');
     } finally {
@@ -97,13 +100,36 @@ export default function DashboardOverview() {
     }
   };
 
-  const handleRejectPayment = async (paymentId: string) => {
+  // const handleRejectPayment = async (paymentId: string) => {
+  //   try {
+  //     await api.rejectPayment(paymentId);
+  //     setPayments(prev => prev.filter(p => p._id !== paymentId));
+  //     toast.success('Pago rechazado exitosamente');
+  //   } catch (error) {
+  //     toast.error('Error al rechazar el pago');
+  //   }
+  // };
+
+  const handleRejectClick = (paymentId: string) => {
+    setSelectedRejectionPaymentId(paymentId);
+    setRejectionReason('');
+    setShowRejectionModal(true);
+  };
+
+  const handleConfirmRejectPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRejectionPaymentId) return;
+
     try {
-      await api.rejectPayment(paymentId);
-      setPayments(prev => prev.filter(p => p._id !== paymentId));
+      await api.rejectPayment(selectedRejectionPaymentId, { reason: rejectionReason });
+      setPayments(prev => prev.filter(p => p._id !== selectedRejectionPaymentId));
       toast.success('Pago rechazado exitosamente');
     } catch (error) {
       toast.error('Error al rechazar el pago');
+    } finally {
+      setShowRejectionModal(false);
+      setSelectedRejectionPaymentId(null);
+      setRejectionReason('');
     }
   };
 
@@ -223,7 +249,7 @@ export default function DashboardOverview() {
                       </button>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleRejectPayment(payment._id)}
+                          onClick={() => handleRejectClick(payment._id)}
                           className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
                         >
                           Rechazar
@@ -395,6 +421,52 @@ export default function DashboardOverview() {
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
                   Completar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showRejectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Rechazar Pago</h2>
+            <form onSubmit={handleConfirmRejectPayment}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Motivo del Rechazo
+                  </label>
+                  <select
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    required
+                  >
+                    <option value="" disabled>Seleccioná un motivo</option>
+                    <option value="Comprobante inválido">Comprobante inválido</option>
+                    <option value="Esperando transferencia">Esperando transferencia</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectionModal(false);
+                    setSelectedRejectionPaymentId(null);
+                    setRejectionReason('');
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Rechazar Pago
                 </button>
               </div>
             </form>
